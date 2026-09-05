@@ -297,7 +297,8 @@ function CustomersPage({customers,setCustomers}:{customers:Customer[];setCustome
 
 function ExpensesPage({loads}:{loads:Load[]}) {
   const cats=[["Diesel",loads.reduce((s,l)=>s+l.diesel,0),"diesel"],["Toll",loads.reduce((s,l)=>s+l.toll,0),"toll"],["Driver Salary",loads.reduce((s,l)=>s+l.driverSalary,0),"driver"]];
-  const total=cats.reduce((s,x)=>s+x[1],0);
+  const total =
+  loads.reduce((s, l) => s + l.diesel + l.toll + l.driverSalary, 0);
   return <div><section className="card summary"><div><h3>Expense summary</h3><p>{loads.length} loads · {money(total)} spent against {money(loads.reduce((s,l)=>s+l.amount,0))} revenue.</p></div></section><div className="stats-grid expense-stats">{cats.map(([name,val,tone])=><StatCard key={String(name)} label={String(name)} value={money(Number(val))} icon={name==="Diesel"?"fuel":name==="Toll"?"wallet":"user"} tone={tone==="diesel"?"green":tone==="toll"?"red":"blue"}/>)}</div><section className="card table-card"><div className="section-head"><div><h3>Expenses by load</h3><span>Detailed trip expenditure</span></div></div><div className="responsive-table"><table><thead><tr><th>Date</th><th>Vehicle</th><th>Route</th><th>Diesel</th><th>Toll</th><th>Driver Salary</th><th>Total</th></tr></thead><tbody>{loads.map(l=><tr key={l.id}><td>{formatDate(l.date)}</td><td>{l.vehicle}</td><td>{l.from} → {l.to}</td><td>{money(l.diesel)}</td><td>{money(l.toll)}</td><td>{money(l.driverSalary)}</td><td><b>{money(expenses(l))}</b></td></tr>)}</tbody></table></div></section></div>;
 }
 

@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  STAFF
+}
+
+enum LoadStatus {
+  PLANNED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+model Organization {
+  id        String    @id @default(cuid())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  users     User[]
+  vehicles  Vehicle[]
+  drivers   Driver[]
+  customers Customer[]
+  loads     Load[]
+}
+
+model User {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  email          String
+  passwordHash   String
+  role           UserRole     @default(STAFF)
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, email])
+  @@index([email])
+  @@index([organizationId, role])
+}
+
+model Vehicle {
+  id             String       @id @default(cuid())
+  organizationId String
+  number         String
+  type           String       @default("Truck")
+  driverId       String?
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  driver         Driver?      @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  loads          Load[]
+
+  @@unique([organizationId, number])
+  @@index([organizationId, active])
+}
+
+model Driver {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  phone          String?
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vehicles       Vehicle[]
+  loads          Load[]
+
+  @@index([organizationId, active])
+  @@index([organizationId, name])
+}
+
+model Customer {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  phone          String?
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  loads          Load[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId, active])
+}
+
+model Load {
+  id             String       @id @default(cuid())
+  organizationId String
+  date           DateTime
+  vehicleId      String
+  driverId       String?
+  customerId     String?
+  from           String
+  to             String
+  rate           Decimal      @default(0) @db.Decimal(14, 2)
+  weight         Decimal      @default(0) @db.Decimal(14, 2)
+  amount         Decimal      @db.Decimal(14, 2)
+  advance        Decimal      @default(0) @db.Decimal(14, 2)
+  diesel         Decimal      @default(0) @db.Decimal(14, 2)
+  toll           Decimal      @default(0) @db.Decimal(14, 2)
+  driverSalary   Decimal      @default(0) @db.Decimal(14, 2)
+  status         LoadStatus   @default(PLANNED)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vehicle        Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  driver         Driver?      @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  customer       Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, date])
+  @@index([organizationId, vehicleId, date])
+  @@index([organizationId, status, date])
+  @@index([organizationId, customerId, date])
+}

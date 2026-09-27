@@ -1,60 +1,304 @@
-# Sri Ranganayaka Transport — Transport Tracker
+# Sri Ranganayaka Transport Tracker — Production SaaS Application
 
-A complete responsive transport-business tracker built with Next.js + React + TypeScript.
+Full-stack Next.js + PostgreSQL + Prisma transport management application designed for deployment on Render as a single web service with a Render PostgreSQL database.
 
-## Included screens
+## Included functionality
 
-- Login / Create Account
-- Dashboard
-- Add New Load
-- Loads / Load History
-- Load Details modal
-- Reports
-- Vehicles
-- Drivers
-- Customers
-- Expenses
-- Settings
+- Current transport-tracker UI and responsive mobile layout
+- Login/logout/current-user session flow
+- **No public registration UI or registration API**
+- Private administrator API for provisioning and revoking access
+- OWNER / MANAGER / STAFF roles
+- Multi-tenant organization isolation
+- Load CRUD
+- Rate + Weight fields
+- Amount initially calculated as Rate × Weight and directly editable
+- Advance and balance receivable
+- Diesel, toll and driver salary expenses
+- Profit/Loss calculation
+- Vehicle CRUD and deactivation
+- Driver CRUD and deactivation
+- Customer CRUD and deactivation
+- Dashboard, reports and expense views
+- PostgreSQL Decimal money storage
+- Server-side validation
+- HTTP-only signed session cookie
+- Tenant-scoped database queries
+- Prisma migrations
+- Render deployment configuration
+- Health check endpoint
+- Security headers
 
-## Current storage
+## Architecture
 
-There is **no database connection** in this version.
+```text
+Browser
+   │
+   ▼
+Render Web Service (Next.js UI + API)
+   │
+   ▼
+Render PostgreSQL
+```
 
-All operational data is stored in the browser using `localStorage`. This makes the app fully usable for UI/prototype testing and lets you move to PostgreSQL later without changing the core user experience.
+The private platform administrator API is part of the same backend, but its API key is never sent to the browser.
 
-## Main business rules
+## Access model
 
-- Load date defaults to today's date.
-- Total expenses = Diesel + Toll + Driver Salary.
-- Profit/Loss = Total Amount - Total Expenses.
-- Balance Receivable = Total Amount - Advance Received.
-- Adding a load immediately updates dashboard, reports, expenses, vehicle/driver/customer views.
-- Delete and restore-demo-data actions are available.
-- Export backup downloads the browser data as JSON.
-- Print buttons use the browser print dialog, suitable for saving as PDF.
+There is no self-service registration.
 
-## Run
+Only the person who possesses the private `ADMIN_API_KEY` can:
 
-Requirements: Node.js 18+.
+1. Create an organization and its initial owner.
+2. Provision additional users.
+3. Change user roles.
+4. Reset user passwords.
+5. Enable/disable users.
+6. Revoke access.
+
+Application users only see the normal Login screen.
+
+## Environment variables
+
+Required in Render:
+
+```env
+DATABASE_URL=postgresql://...
+AUTH_SECRET=<random value, 32+ characters>
+ADMIN_API_KEY=<private random value, 32+ characters>
+```
+
+Generate secrets locally with:
+
+```bash
+openssl rand -base64 48
+```
+
+Never put the real `ADMIN_API_KEY` into GitHub, frontend code, screenshots or `NEXT_PUBLIC_*` variables.
+
+## Local setup
 
 ```bash
 npm install
+cp .env.example .env.local
+npx prisma generate
+npx prisma migrate deploy
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+For local development, set all three variables in `.env.local`.
 
-Any email/password is accepted in this no-backend prototype; authentication is intentionally local-only.
+## Render deployment
 
-## Next DB phase
+The included `render.yaml` runs:
 
-Recommended production architecture:
+```text
+npm install && npm run check:env && npx prisma generate && npx prisma migrate deploy && npm run build
+```
 
-- Next.js App Router
-- PostgreSQL
-- Prisma ORM
-- Auth.js / secure server sessions
-- Role-based access for owner, accountant and staff
-- Server-side validation
-- Audit log
-- Cloud backup
+and starts with:
+
+```text
+npm start
+```
+
+The health check is:
+
+```text
+/api/health
+```
+
+Create a Render PostgreSQL database and set its connection string as `DATABASE_URL` on the web service. Set `AUTH_SECRET` and `ADMIN_API_KEY` as Render secret environment variables.
+
+## Private administrator API
+
+All admin endpoints require:
+
+```http
+Authorization: Bearer YOUR_ADMIN_API_KEY
+```
+
+Do not call these endpoints from the React/browser application.
+
+### Create an organization and initial owner
+
+```http
+POST /api/admin/organizations
+Content-Type: application/json
+Authorization: Bearer YOUR_ADMIN_API_KEY
+```
+
+Body:
+
+```json
+{
+  "name": "Sri Ranganayaka Transport",
+  "ownerName": "Business Owner",
+  "ownerEmail": "owner@example.com",
+  "ownerPassword": "strong-password"
+}
+```
+
+This creates both the organization and its OWNER account.
+
+### List organizations
+
+```http
+GET /api/admin/organizations
+Authorization: Bearer YOUR_ADMIN_API_KEY
+```
+
+### Provision a user
+
+```http
+POST /api/admin/users
+Content-Type: application/json
+Authorization: Bearer YOUR_ADMIN_API_KEY
+```
+
+Body:
+
+```json
+{
+  "organizationId": "ORG_ID",
+  "name": "Operations Manager",
+  "email": "manager@example.com",
+  "password": "strong-password",
+  "role": "MANAGER"
+}
+```
+
+### List organization users
+
+```http
+GET /api/admin/users?organizationId=ORG_ID
+Authorization: Bearer YOUR_ADMIN_API_KEY
+```
+
+### Change user access / role / password
+
+```http
+PATCH /api/admin/users/USER_ID
+Content-Type: application/json
+Authorization: Bearer YOUR_ADMIN_API_KEY
+```
+
+Example:
+
+```json
+{
+  "active": true,
+  "role": "STAFF"
+}
+```
+
+Password reset example:
+
+```json
+{
+  "password": "new-strong-password"
+}
+```
+
+### Revoke access
+
+```http
+DELETE /api/admin/users/USER_ID
+Authorization: Bearer YOUR_ADMIN_API_KEY
+```
+
+This performs a soft revoke by setting `active=false`. The user's existing session will also stop working because every authenticated request verifies that the account is still active.
+
+## Application API
+
+### Authentication
+
+```text
+POST /api/auth/login
+POST /api/auth/logout
+GET  /api/auth/me
+```
+
+There is intentionally **no** `/api/auth/signup` route.
+
+### Loads
+
+```text
+GET    /api/loads
+POST   /api/loads
+GET    /api/loads/:id
+PATCH  /api/loads/:id
+DELETE /api/loads/:id
+```
+
+### Vehicles
+
+```text
+GET    /api/vehicles
+POST   /api/vehicles
+PATCH  /api/vehicles/:id
+DELETE /api/vehicles/:id
+```
+
+### Drivers
+
+```text
+GET    /api/drivers
+POST   /api/drivers
+PATCH  /api/drivers/:id
+DELETE /api/drivers/:id
+```
+
+### Customers
+
+```text
+GET    /api/customers
+POST   /api/customers
+PATCH  /api/customers/:id
+DELETE /api/customers/:id
+```
+
+### Dashboard and health
+
+```text
+GET /api/dashboard
+GET /api/health
+```
+
+## Financial rules
+
+For each load:
+
+- Amount defaults in the UI to `Rate × Weight`.
+- Amount remains directly editable.
+- Total Expenses = Diesel + Toll + Driver Salary.
+- Profit/Loss = Amount − Total Expenses.
+- Balance Receivable = Amount − Advance.
+
+Rate, Weight and Amount are stored as PostgreSQL `Decimal(14,2)` values.
+
+## Database migrations
+
+Committed migrations are under:
+
+```text
+prisma/migrations/
+```
+
+Production deployment uses:
+
+```bash
+npx prisma migrate deploy
+```
+
+Do not use `prisma migrate dev` against the production database.
+
+## Important production notes
+
+- Keep PostgreSQL on Render or another managed provider for production.
+- Keep `ADMIN_API_KEY` server-side only.
+- Use a long random `AUTH_SECRET`.
+- Enable Render automatic deploys only from the intended Git branch.
+- Configure database backups/retention in the database provider.
+- Do not expose Prisma Studio publicly.
+- Do not commit `.env.local` or production secrets.

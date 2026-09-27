@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";
+import { prisma } from "../../../lib/prisma";
+import { requireSession } from "../../../lib/auth";
+import { handleError } from "../../../lib/api";
+export async function GET(){try{const s=await requireSession();const loads=await prisma.load.findMany({where:{organizationId:s.organizationId},select:{date:true,amount:true,advance:true,diesel:true,toll:true,driverSalary:true,status:true},orderBy:{date:"desc"}});let revenue=0,expenses=0,advance=0;for(const l of loads){revenue+=Number(l.amount);advance+=Number(l.advance);expenses+=Number(l.diesel)+Number(l.toll)+Number(l.driverSalary)}return NextResponse.json({summary:{revenue,expenses,profit:revenue-expenses,trips:loads.length,balanceReceivable:revenue-advance},loads:loads.slice(0,20).map(l=>({...l,amount:Number(l.amount),advance:Number(l.advance),diesel:Number(l.diesel),toll:Number(l.toll),driverSalary:Number(l.driverSalary),profit:Number(l.amount)-Number(l.diesel)-Number(l.toll)-Number(l.driverSalary)}))});}catch(e){return handleError(e)}}

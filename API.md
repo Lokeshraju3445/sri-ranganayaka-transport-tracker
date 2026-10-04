@@ -83,3 +83,33 @@ Load fields include `rate`, `weight`, and directly editable `amount`. The UI ini
 - `GET /api/health`
 
 All operational endpoints are scoped to the authenticated user's `organizationId`.
+
+
+## Platform admin complete management
+
+See `ADMIN_API.md` and `admin-api-examples.sh` for the complete administrator API and cURL examples. A Postman collection is included at `postman/Sri-Ranganayaka-Transport-Admin.postman_collection.json`.
+
+### Additional endpoints
+
+```text
+GET    /api/admin/organizations/:id
+PATCH  /api/admin/organizations/:id
+DELETE /api/admin/organizations/:id
+POST   /api/admin/organizations/:id/activate
+POST   /api/admin/organizations/:id/deactivate
+GET    /api/admin/organizations/:id/users
+DELETE /api/admin/organizations/:id/users/:userId
+
+GET    /api/admin/users/:id
+POST   /api/admin/users/:id/activate
+POST   /api/admin/users/:id/deactivate
+POST   /api/admin/users/:id/revoke
+GET    /api/admin/users/:id/organizations
+POST   /api/admin/users/:id/organizations/:organizationId
+PATCH  /api/admin/users/:id/organizations/:organizationId
+DELETE /api/admin/users/:id/organizations/:organizationId
+POST   /api/admin/users/:id/organizations/:organizationId/primary
+
+GET    /api/auth/organizations
+POST   /api/auth/organizations/:organizationId
+```

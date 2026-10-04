@@ -4,31 +4,17 @@ import { prisma } from "./prisma";
 
 const COOKIE = "transport_session";
 const rawSecret = process.env.AUTH_SECRET;
-if (process.env.NODE_ENV === "production" && (!rawSecret || rawSecret.length < 32)) {
-  throw new Error("AUTH_SECRET must be set to a random value of at least 32 characters in production");
-}
+if (process.env.NODE_ENV === "production" && (!rawSecret || rawSecret.length < 32)) throw new Error("AUTH_SECRET must be set to a random value of at least 32 characters in production");
 const secret = new TextEncoder().encode(rawSecret || "local-development-secret-change-me-32-characters");
 
 export type Session = { userId: string; organizationId: string; role: "OWNER" | "MANAGER" | "STAFF" };
 
 export async function createSession(session: Session) {
-  const token = await new SignJWT(session)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("7d")
-    .sign(secret);
-  cookies().set(COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  const token = await new SignJWT(session).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("7d").sign(secret);
+  cookies().set(COOKIE, token, { httpOnly:true, secure:process.env.NODE_ENV === "production", sameSite:"lax", path:"/", maxAge:60*60*24*7 });
 }
 
-export function clearSession() {
-  cookies().set(COOKIE, "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 0 });
-}
+export function clearSession() { cookies().set(COOKIE, "", { httpOnly:true, secure:process.env.NODE_ENV === "production", sameSite:"lax", path:"/", maxAge:0 }); }
 
 export async function getSession(): Promise<Session | null> {
   const token = cookies().get(COOKIE)?.value;
@@ -36,18 +22,23 @@ export async function getSession(): Promise<Session | null> {
   try {
     const { payload } = await jwtVerify(token, secret);
     if (!payload.userId || !payload.organizationId || !payload.role) return null;
-    return { userId: String(payload.userId), organizationId: String(payload.organizationId), role: payload.role as Session["role"] };
-  } catch {
-    return null;
-  }
+    return { userId:String(payload.userId), organizationId:String(payload.organizationId), role:payload.role as Session["role"] };
+  } catch { return null; }
 }
 
-export async function requireSession() {
+export async function requireSession(): Promise<Session> {
   const session = await getSession();
   if (!session) throw new Error("UNAUTHORIZED");
-  const user = await prisma.user.findFirst({ where: { id: session.userId, organizationId: session.organizationId, active: true } });
-  if (!user) throw new Error("UNAUTHORIZED");
-  return session;
+  const rows = await prisma.$queryRaw<Array<{ userId:string; organizationId:string; role:"OWNER"|"MANAGER"|"STAFF" }>>`
+    SELECT u."id" AS "userId", m."organizationId", m."role"::text AS "role"
+    FROM "User" u
+    INNER JOIN "OrganizationMembership" m ON m."userId" = u."id"
+    INNER JOIN "Organization" o ON o."id" = m."organizationId"
+    WHERE u."id"=${session.userId} AND u."active"=true AND m."organizationId"=${session.organizationId} AND m."active"=true AND o."active"=true
+    LIMIT 1
+  `;
+  if (!rows[0]) throw new Error("UNAUTHORIZED");
+  return { userId: rows[0].userId, organizationId: rows[0].organizationId, role: rows[0].role };
 }
 
 export function canWrite(role: Session["role"]) { return role === "OWNER" || role === "MANAGER"; }

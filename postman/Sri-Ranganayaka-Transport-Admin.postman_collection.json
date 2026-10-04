@@ -1,0 +1,403 @@
+{
+  "info": {
+    "name": "Sri Ranganayaka Transport - Platform Admin API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Private ADMIN_API_KEY management API. Never expose adminApiKey in frontend code."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://sri-ranganayaka-transport-tracker.onrender.com"
+    },
+    {
+      "key": "adminApiKey",
+      "value": "REPLACE_WITH_RENDER_ADMIN_API_KEY"
+    },
+    {
+      "key": "organizationId",
+      "value": "REPLACE_AFTER_CREATE"
+    },
+    {
+      "key": "userId",
+      "value": "REPLACE_AFTER_CREATE"
+    }
+  ],
+  "item": [
+    {
+      "name": "Create organization + owner",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/organizations",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sri Ranganayaka Transport\",\n  \"ownerName\": \"Business Owner\",\n  \"ownerEmail\": \"owner@example.com\",\n  \"ownerPassword\": \"CHANGE_THIS_PASSWORD\"\n}"
+        }
+      }
+    },
+    {
+      "name": "List active organizations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/organizations"
+      }
+    },
+    {
+      "name": "List all organizations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/organizations?includeInactive=true"
+      }
+    },
+    {
+      "name": "Get organization",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/organizations/{{organizationId}}"
+      }
+    },
+    {
+      "name": "Rename organization",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/organizations/{{organizationId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Updated Transport Name\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Deactivate organization",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/organizations/{{organizationId}}/deactivate"
+      }
+    },
+    {
+      "name": "Activate organization",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/organizations/{{organizationId}}/activate"
+      }
+    },
+    {
+      "name": "Delete organization - soft delete",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/organizations/{{organizationId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"confirmName\": \"Sri Ranganayaka Transport\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Create user",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"organizationId\": \"{{organizationId}}\",\n  \"name\": \"Operations Manager\",\n  \"email\": \"manager@example.com\",\n  \"password\": \"CHANGE_THIS_PASSWORD\",\n  \"role\": \"MANAGER\"\n}"
+        }
+      }
+    },
+    {
+      "name": "List organization users",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users?organizationId={{organizationId}}"
+      }
+    },
+    {
+      "name": "Get organization users",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/organizations/{{organizationId}}/users"
+      }
+    },
+    {
+      "name": "Get user",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/{{userId}}"
+      }
+    },
+    {
+      "name": "Update user",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/{{userId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Operations Manager\",\n  \"role\": \"STAFF\",\n  \"active\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Reset user password",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/{{userId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"password\": \"NEW_STRONG_PASSWORD\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Global revoke user",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/{{userId}}"
+      }
+    },
+    {
+      "name": "Activate user",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/{{userId}}/activate"
+      }
+    },
+    {
+      "name": "Deactivate user",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/{{userId}}/deactivate"
+      }
+    },
+    {
+      "name": "Revoke user",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/{{userId}}/revoke"
+      }
+    },
+    {
+      "name": "List user organization access",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/{{userId}}/organizations"
+      }
+    },
+    {
+      "name": "Grant organization access",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/{{userId}}/organizations/{{organizationId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"MANAGER\",\n  \"active\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Update organization access",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/{{userId}}/organizations/{{organizationId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"STAFF\",\n  \"active\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Revoke organization access",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/{{userId}}/organizations/{{organizationId}}"
+      }
+    },
+    {
+      "name": "Delete user from organization",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/organizations/{{organizationId}}/users/{{userId}}"
+      }
+    },
+    {
+      "name": "Make organization primary",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminApiKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/{{userId}}/organizations/{{organizationId}}/primary"
+      }
+    }
+  ]
+}

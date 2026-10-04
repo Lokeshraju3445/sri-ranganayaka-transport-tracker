@@ -302,3 +302,14 @@ Do not use `prisma migrate dev` against the production database.
 - Configure database backups/retention in the database provider.
 - Do not expose Prisma Studio publicly.
 - Do not commit `.env.local` or production secrets.
+
+
+## Platform administration v1.2
+
+The application now supports complete private platform administration through `ADMIN_API_KEY`: organization details, rename/activation/deactivation, safe organization soft-delete, organization user listing/revocation, user activation/deactivation/revocation, password/role management, multi-organization access grants, per-organization roles, membership revocation, and primary-organization selection.
+
+A user can belong to multiple organizations. The active organization is selected in the signed session, and every operational API request revalidates the user's membership and role against PostgreSQL. This prevents stale sessions from retaining access after an administrator revokes organization access.
+
+See `ADMIN_API.md`, `admin-api-examples.sh`, and `postman/Sri-Ranganayaka-Transport-Admin.postman_collection.json`.
+
+Organization DELETE is intentionally a **soft delete** (`active=false`) to protect transport and financial history. Use the activate endpoint to restore access.

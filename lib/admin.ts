@@ -7,7 +7,6 @@ export function requireAdminApiKey(req: Request) {
   const supplied = auth.startsWith("Bearer ") ? auth.slice(7) : req.headers.get("x-admin-api-key") || "";
   const a = Buffer.from(supplied);
   const b = Buffer.from(configured);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) {
-    throw new Error("ADMIN_UNAUTHORIZED");
-  }
+  if (a.length !== b.length || !timingSafeEqual(a, b)) throw new Error("ADMIN_UNAUTHORIZED");
 }
+
